@@ -13,8 +13,28 @@ def get_device() -> torch.device:
         return torch.device('cpu')
 
 
-def load_checkpoint(checkpoint_path: str, nc: int, device: torch.device):
-    ckpt = torch.load(checkpoint_path, map_location=device, weights_only=True)
+def _torch_load_smart(path: str, device, mode: str = 'auto') -> Any:
+    '''
+    Carga robusta con soporte para 'weights_only' en PyTorch recientes.
+    mode: 'auto' | 'true' | 'false'
+    '''
+
+    try:
+        if mode == 'true':
+            return torch.load(path, map_location=device, weights_only=True)
+        elif mode == 'false':
+            return torch.load(path, map_location=device, weights_only=False)
+        else:  # auto
+            try:
+                return torch.load(path, map_location=device, weights_only=False)
+            except TypeError:
+                return torch.load(path, map_location=device)
+    except TypeError:
+        return torch.load(path, map_location=device)
+
+
+def load_checkpoint(checkpoint_path: str, nc: int, device: torch.device, mode: str = 'auto'):
+    ckpt = _torch_load_smart(checkpoint_path, device, 'auto')
 
     if isinstance(ckpt, dict):
         # Inferir hyperparams desde el ckpt si están disponibles
@@ -41,6 +61,8 @@ def load_checkpoint(checkpoint_path: str, nc: int, device: torch.device):
             {
                 'epoch': ckpt.get('epoch', 0),
                 'netG': G,
+                'optG': None,
+                'optD': None,
                 'opts': {
                     'nz': nz,
                     'ngf': ngf,
