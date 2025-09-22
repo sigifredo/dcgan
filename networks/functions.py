@@ -61,8 +61,6 @@ def load_checkpoint(checkpoint_path: str, nc: int, device: torch.device, mode: s
             {
                 'epoch': ckpt.get('epoch', 0),
                 'netG': G,
-                'optG': None,
-                'optD': None,
                 'opts': {
                     'nz': nz,
                     'ngf': ngf,
