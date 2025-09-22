@@ -120,21 +120,6 @@ def save_sample_grid(tensor_bchw: torch.Tensor, out_dir: pathlib.Path, stem: str
     return out_path
 
 
-def save_network(epoch_final, netG, netD, optimizerG, optimizerD, opts, path):
-    torch.save(
-        {
-            'epoch': epoch_final,
-            'netG': netG.state_dict(),
-            'netD': netD.state_dict(),
-            'optG': optimizerG.state_dict(),
-            'optD': optimizerD.state_dict(),
-            'opts': vars(opts),
-            'seed': opts.manualSeed,
-        },
-        path,
-    )
-
-
 def train(opts):
     device = torch.device(f'cuda:{opts.gpu-1}' if (opts.gpu > 0 and torch.cuda.is_available()) else 'cpu')
 
@@ -239,7 +224,7 @@ def train(opts):
 
         # Fin de epoch — guardar checkpoints (modulo)
         if (epoch % opts.epoch_save_modulo) == 0:
-            save_network(epoch, netG, netD, optimizerG, optimizerD, opts, ckpt_dir / f'{opts.name}_epoch_{epoch:03d}.pt')
+            net.save_network(epoch, netG, netD, optimizerG, optimizerD, opts, ckpt_dir / f'{opts.name}_epoch_{epoch:03d}.pt')
             # también una muestra fija por epoch
             with torch.no_grad():
                 fake_vis = netG(fixed_noise).detach().cpu()
@@ -250,7 +235,7 @@ def train(opts):
     epoch_final = epoch if 'epoch' in locals() else opts.niter
     final_path = ckpt_dir / f'{opts.name}_final.pt'
 
-    save_network(epoch_final, netG, netD, optimizerG, optimizerD, opts, final_path)
+    net.save_network(epoch_final, netG, netD, optimizerG, optimizerD, opts, final_path)
 
     print(f'[Checkpoint] Guardado final en: {final_path}')
     print('Entrenamiento finalizado.')
