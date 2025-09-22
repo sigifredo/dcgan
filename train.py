@@ -1,5 +1,4 @@
 #!/bin/env python3
-# -*- coding: utf-8 -*-
 
 '''
 DCGAN 64x64 — Traducción fiel de Torch7/Lua a PyTorch (Python).
@@ -10,23 +9,14 @@ DCGAN 64x64 — Traducción fiel de Torch7/Lua a PyTorch (Python).
 - Salidas: checkpoints/ y samples/ (grids PNG). Probado en PyTorch >= 2.1, torchvision >= 0.16. En Colab suele venir preinstalado.
 '''
 
-import os
-import time
-import math
-import random
 import argparse
-from pathlib import Path
-
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader
-
-import torchvision
-import torchvision.transforms as T
-from torchvision.utils import save_image, make_grid
-
 import networks as net
+import pathlib
+import random
+import time
+import torch
+import torchvision as tv
+import torchvision.transforms as T
 
 
 # ------------------------------------------------------------
@@ -36,6 +26,7 @@ def set_seed(seed: int, cuda_deterministic: bool = False):
     random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
+
     if cuda_deterministic:
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
@@ -43,23 +34,25 @@ def set_seed(seed: int, cuda_deterministic: bool = False):
         torch.backends.cudnn.benchmark = True
 
 
-def weights_init_dcgan(m: nn.Module):
+def weights_init_dcgan(m: torch.nn.Module):
     '''Imita el weights_init de Torch7:
     - Convs: N(0, 0.02)
     - BN:    gamma ~ N(1, 0.02), beta = 0
     - Conv layers que anteceden BN usan bias=False (como m:noBias() en Torch).
     '''
+
     classname = m.__class__.__name__
+
     if classname.find('Conv') != -1:
         if hasattr(m, 'weight') and m.weight is not None:
-            nn.init.normal_(m.weight, 0.0, 0.02)
+            torch.nn.init.normal_(m.weight, 0.0, 0.02)
         if hasattr(m, 'bias') and m.bias is not None:
-            nn.init.zeros_(m.bias)
+            torch.nn.init.zeros_(m.bias)
     elif classname.find('BatchNorm') != -1:
         if hasattr(m, 'weight') and m.weight is not None:
-            nn.init.normal_(m.weight, 1.0, 0.02)
+            torch.nn.init.normal_(m.weight, 1.0, 0.02)
         if hasattr(m, 'bias') and m.bias is not None:
-            nn.init.zeros_(m.bias)
+            torch.nn.init.zeros_(m.bias)
 
 
 # ------------------------------------------------------------
@@ -83,7 +76,7 @@ def get_dataset(name: str, data_root: str, loadSize: int, fineSize: int, lsun_cl
 
     if name == 'folder' or name == 'imagenet':
         # Para 'imagenet', apunta data_root al directorio con subcarpetas de clases (como ImageFolder).
-        return torchvision.datasets.ImageFolder(root=data_root, transform=tfm)
+        return tv.datasets.ImageFolder(root=data_root, transform=tfm)
 
     elif name == 'lsun':
         # Nota: LSUN es pesado y su descarga puede fallar en Colab sin credenciales adecuadas.
@@ -91,14 +84,14 @@ def get_dataset(name: str, data_root: str, loadSize: int, fineSize: int, lsun_cl
         classes = [c.strip() for c in lsun_classes.split(',') if c.strip()]
         if not classes:
             classes = ['bedroom_train']
-        return torchvision.datasets.LSUN(root=data_root, classes=classes, transform=tfm)
+        return tv.datasets.LSUN(root=data_root, classes=classes, transform=tfm)
 
     elif name == 'cifar10':
-        return torchvision.datasets.CIFAR10(root=data_root, train=True, download=True, transform=tfm)
+        return tv.datasets.CIFAR10(root=data_root, train=True, download=True, transform=tfm)
 
     elif name == 'fake':
         # Para pruebas rápidas
-        return torchvision.datasets.FakeData(size=4096, image_size=(3, fineSize, fineSize), transform=tfm)
+        return tv.datasets.FakeData(size=4096, image_size=(3, fineSize, fineSize), transform=tfm)
 
     else:
         raise ValueError(f'Dataset no soportado: {name}. Usa lsun / imagenet / folder / cifar10 / fake')
@@ -110,18 +103,19 @@ def get_dataset(name: str, data_root: str, loadSize: int, fineSize: int, lsun_cl
 def sample_noise(batch_size: int, nz: int, device, noise_type: str):
     if noise_type == 'uniform':
         return torch.rand(batch_size, nz, 1, 1, device=device) * 2.0 - 1.0
+
     # default: normal
     return torch.randn(batch_size, nz, 1, 1, device=device)
 
 
-def save_sample_grid(tensor_bchw: torch.Tensor, out_dir: Path, stem: str, nrow: int = 8):
+def save_sample_grid(tensor_bchw: torch.Tensor, out_dir: pathlib.Path, stem: str, nrow: int = 8):
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # Tus imágenes salen de G en [-1, 1]; las llevamos a [0, 1] manualmente.
     t = tensor_bchw.detach().clamp_(-1, 1).add_(1).div_(2)
-    grid = make_grid(t, nrow=nrow, padding=2)  # no normalize/value_range
+    grid = tv.utils.make_grid(t, nrow=nrow, padding=2)  # no normalize/value_range
     out_path = out_dir / f'{stem}.png'
-    save_image(grid, out_path)
+    tv.utils.save_image(grid, out_path)
 
     return out_path
 
@@ -157,7 +151,7 @@ def train(opts):
     # Datos
     dataset = get_dataset(opts.dataset, opts.data_root, opts.loadSize, opts.fineSize, opts.lsun_classes)
     print(f'Dataset: {opts.dataset}  Tamaño: {len(dataset)}')
-    loader = DataLoader(dataset, batch_size=opts.batchSize, shuffle=True, num_workers=opts.nThreads, pin_memory=True if device.type == 'cuda' else False, drop_last=True)
+    loader = torch.utils.data.DataLoader(dataset, batch_size=opts.batchSize, shuffle=True, num_workers=opts.nThreads, pin_memory=True if device.type == 'cuda' else False, drop_last=True)
 
     # Modelos
     nz, ngf, ndf, nc = opts.nz, opts.ngf, opts.ndf, 3
@@ -167,9 +161,9 @@ def train(opts):
     netD.apply(weights_init_dcgan)
 
     # Pérdida y optimizadores (Sigmoid + BCELoss como en Torch7)
-    criterion = nn.BCELoss().to(device)
-    optimizerD = optim.Adam(netD.parameters(), lr=opts.lr, betas=(opts.beta1, 0.999))
-    optimizerG = optim.Adam(netG.parameters(), lr=opts.lr, betas=(opts.beta1, 0.999))
+    criterion = torch.nn.BCELoss().to(device)
+    optimizerD = torch.optim.Adam(netD.parameters(), lr=opts.lr, betas=(opts.beta1, 0.999))
+    optimizerG = torch.optim.Adam(netG.parameters(), lr=opts.lr, betas=(opts.beta1, 0.999))
 
     real_label = 1.0
     fake_label = 0.0
@@ -178,9 +172,9 @@ def train(opts):
     fixed_noise = sample_noise(opts.batchSize, nz, device, opts.noise)
 
     # Directorios
-    ckpt_dir = Path('checkpoints')
+    ckpt_dir = pathlib.Path('checkpoints')
     ckpt_dir.mkdir(exist_ok=True)
-    samples_dir = Path('samples')
+    samples_dir = pathlib.Path('samples')
     samples_dir.mkdir(exist_ok=True)
 
     # Entrenamiento
@@ -308,5 +302,5 @@ def parse_args():
 if __name__ == '__main__':
     opts = parse_args()
     # Asegura carpetas básicas
-    Path(opts.data_root).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(opts.data_root).mkdir(parents=True, exist_ok=True)
     train(opts)
