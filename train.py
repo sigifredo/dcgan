@@ -155,6 +155,14 @@ def train(opts):
     optimizerD = res.optD
     start_epoch = res.start_epoch  # 1 o ckpt.epoch+1
 
+    if getattr(res, 'ckpt_meta', None) and opts.manualSeed is None and isinstance(res.ckpt_meta, dict):
+        ck_seed = res.ckpt_meta.get('seed', None)
+
+        if ck_seed is not None:
+            print(f'[Resume] Usando seed del checkpoint: {ck_seed}')
+            opts.manualSeed = int(ck_seed)
+            set_seed(opts.manualSeed, cuda_deterministic=False)
+
     real_label = 1.0
     fake_label = 0.0
 
