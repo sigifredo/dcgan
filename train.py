@@ -35,7 +35,8 @@ def set_seed(seed: int, cuda_deterministic: bool = False):
 
 
 def weights_init_dcgan(m: torch.nn.Module):
-    '''Imita el weights_init de Torch7:
+    '''
+    Imita el weights_init de Torch7:
     - Convs: N(0, 0.02)
     - BN:    gamma ~ N(1, 0.02), beta = 0
     - Conv layers que anteceden BN usan bias=False (como m:noBias() en Torch).
