@@ -229,7 +229,7 @@ def train(opts):
             if opts.display and (global_step % opts.display_freq == 0):
                 with torch.no_grad():
                     fake_vis = netG(fixed_noise).detach().cpu()
-                img_path = save_sample_grid(fake_vis, samples_dir, f'{opts.name}_e{epoch:03d}_it{global_step}', nrow=8)
+                img_path = save_sample_grid(fake_vis, samples_dir, f'{opts.name}_e{epoch:03d}_it{global_step:08d}', nrow=8)
                 print(f'[Vis] Guardada muestra: {img_path}')
 
             if (i % opts.log_every) == 0:

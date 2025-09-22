@@ -13,7 +13,7 @@ def get_device() -> torch.device:
         return torch.device('cpu')
 
 
-def _torch_load_smart(path: str, device, mode: str = 'auto') -> Any:
+def _torch_load_smart(path: str, device, mode: str = 'auto'):
     '''
     Carga robusta con soporte para 'weights_only' en PyTorch recientes.
     mode: 'auto' | 'true' | 'false'
