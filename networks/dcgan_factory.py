@@ -229,7 +229,7 @@ class DCGANFactory128:
         D.apply(weights_init_dcgan)
 
         # Pérdida y optimizadores (Sigmoid + BCELoss como en Torch7)
-        criterion = torch.nn.BCELoss().to(cfg.device)
+        criterion = torch.nn.BCEWithLogitsLoss().to(cfg.device)
         optD = torch.optim.Adam(D.parameters(), lr=cfg.lr, betas=(cfg.beta1, 0.999))
         optG = torch.optim.Adam(G.parameters(), lr=cfg.lr, betas=(cfg.beta1, 0.999))
 

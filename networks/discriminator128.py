@@ -26,7 +26,7 @@ class Discriminator128(torch.nn.Module):
             torch.nn.LeakyReLU(0.2, inplace=True),
             # (ndf*16) -> 1 x 1 x 1
             torch.nn.Conv2d(ndf * 16, 1, 4, 1, 0, bias=True),
-            torch.nn.Sigmoid(),
+            # torch.nn.Sigmoid(),
         )
 
     def forward(self, x):
