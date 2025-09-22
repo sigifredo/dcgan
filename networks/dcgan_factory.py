@@ -28,6 +28,7 @@ class ModelConfig:
     lr: float = 2e-4
     beta1: float = 0.5
     device: torch.device = torch.device('cpu')
+    image_size: int = 128
 
 
 # ---------------------------------------------------------------------
@@ -213,6 +214,74 @@ class DCGANFactory64:
 
 
 # ---------------------------------------------------------------------
+# Fábrica (Factory Method) para DCGAN 128x128
+# ---------------------------------------------------------------------
+class DCGANFactory128:
+    @staticmethod
+    def create_fresh(cfg: ModelConfig) -> BuildResult:
+        '''
+        Crea G/D/criterio/optimizadores desde cero (128x128) e inicializa pesos.
+        '''
+
+        G = net.Generator128(nz=cfg.nz, ngf=cfg.ngf, nc=cfg.nc).to(cfg.device)
+        D = net.Discriminator128(ndf=cfg.ndf, nc=cfg.nc).to(cfg.device)
+        G.apply(weights_init_dcgan)
+        D.apply(weights_init_dcgan)
+
+        # Pérdida y optimizadores (Sigmoid + BCELoss como en Torch7)
+        criterion = torch.nn.BCELoss().to(cfg.device)
+        optD = torch.optim.Adam(D.parameters(), lr=cfg.lr, betas=(cfg.beta1, 0.999))
+        optG = torch.optim.Adam(G.parameters(), lr=cfg.lr, betas=(cfg.beta1, 0.999))
+
+        return BuildResult(
+            G=G,
+            D=D,
+            criterion=criterion,
+            optG=optG,
+            optD=optD,
+            start_epoch=1,
+            ckpt_meta=None,
+        )
+
+    @staticmethod
+    def create_from_checkpoint(
+        cfg: ModelConfig,
+        ckpt_path: str | pathlib.Path,
+        *,
+        weights_only_mode: str = 'auto',
+        strict_g: bool = True,
+    ) -> BuildResult:
+        '''
+        Construye modelos/opt y los llena con un checkpoint (reanuda).
+        '''
+
+        ckpt_path = pathlib.Path(ckpt_path)
+
+        if not ckpt_path.exists():
+            raise FileNotFoundError(f'Checkpoint no encontrado: {ckpt_path}')
+
+        # Primero crea 'en blanco'
+        fresh = DCGANFactory128.create_fresh(cfg)
+
+        # Luego carga estado
+        start_epoch, meta = load_checkpoint_into_models(
+            ckpt_path,
+            cfg.device,
+            fresh.G,
+            fresh.D,
+            fresh.optG,
+            fresh.optD,
+            weights_only_mode=weights_only_mode,
+            strict_g=strict_g,
+        )
+
+        fresh.start_epoch = start_epoch
+        fresh.ckpt_meta = meta
+
+        return fresh
+
+
+# ---------------------------------------------------------------------
 # Mini-Facade: una sola función para crear o reanudar
 # ---------------------------------------------------------------------
 def build_or_resume(
@@ -227,6 +296,8 @@ def build_or_resume(
     Si se pasa resume_path, construye y reanuda desde ese checkpoint.
     '''
 
+    Factory = DCGANFactory128 if int(cfg.image_size) >= 128 else DCGANFactory64
+
     if resume_path is None:
-        return DCGANFactory64.create_fresh(cfg)
-    return DCGANFactory64.create_from_checkpoint(cfg, resume_path, weights_only_mode=weights_only_mode, strict_g=strict_g)
+        return Factory.create_fresh(cfg)
+    return Factory.create_from_checkpoint(cfg, resume_path, weights_only_mode=weights_only_mode, strict_g=strict_g)

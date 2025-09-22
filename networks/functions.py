@@ -1,4 +1,4 @@
-from .generator import Generator
+# from .generator import Generator
 
 import torch
 import types
@@ -34,7 +34,7 @@ def _torch_load_smart(path: str, device, mode: str = 'auto'):
 
 
 def load_checkpoint(checkpoint_path: str, nc: int, device: torch.device, mode: str = 'auto'):
-    ckpt = _torch_load_smart(checkpoint_path, device, 'auto')
+    ckpt = _torch_load_smart(checkpoint_path, device, mode)
 
     if isinstance(ckpt, dict):
         # Inferir hyperparams desde el ckpt si están disponibles
@@ -43,6 +43,11 @@ def load_checkpoint(checkpoint_path: str, nc: int, device: torch.device, mode: s
         size = (ckpt.get('opts', {}) or {}).get('fineSize', 64)
 
         # Construir generador
+        if size >= 128:
+            from .generator128 import Generator128 as Generator
+        else:
+            from .generator64 import Generator64 as Generator
+
         G = Generator(nz=nz, ngf=ngf, nc=nc).to(device)
         G.eval()
 

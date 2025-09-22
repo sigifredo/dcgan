@@ -140,7 +140,16 @@ def train(opts):
     loader = torch.utils.data.DataLoader(dataset, batch_size=opts.batchSize, shuffle=True, num_workers=opts.nThreads, pin_memory=True if device.type == 'cuda' else False, drop_last=True)
 
     # Modelos — usando la fábrica 64×64 (crea o reanuda)
-    cfg = net.ModelConfig(nz=opts.nz, ngf=opts.ngf, ndf=opts.ndf, nc=3, lr=opts.lr, beta1=opts.beta1, device=device)
+    cfg = net.ModelConfig(
+        nz=opts.nz,
+        ngf=opts.ngf,
+        ndf=opts.ndf,
+        nc=3,
+        lr=opts.lr,
+        beta1=opts.beta1,
+        device=device,
+        image_size=opts.fineSize,
+    )
 
     res = net.build_or_resume(
         cfg,
@@ -270,8 +279,8 @@ def parse_args():
     p.add_argument('--lsun_classes', type=str, default='bedroom_train', help='Clases LSUN separadas por coma, p.ej: "bedroom_train,church_outdoor_train"')
 
     p.add_argument('--batchSize', type=int, default=64)
-    p.add_argument('--loadSize', type=int, default=96)
-    p.add_argument('--fineSize', type=int, default=64)
+    p.add_argument('--loadSize', type=int, default=160)
+    p.add_argument('--fineSize', type=int, default=128)
 
     p.add_argument('--nz', type=int, default=100, help='Dimensión del vector Z')
     p.add_argument('--ngf', type=int, default=64, help='# filtros iniciales del generador')
