@@ -138,17 +138,22 @@ def train(opts):
     print(f'Dataset: {opts.dataset}  Tamaño: {len(dataset)}')
     loader = torch.utils.data.DataLoader(dataset, batch_size=opts.batchSize, shuffle=True, num_workers=opts.nThreads, pin_memory=True if device.type == 'cuda' else False, drop_last=True)
 
-    # Modelos
-    nz, ngf, ndf, nc = opts.nz, opts.ngf, opts.ndf, 3
-    netG = net.Generator(nz=nz, ngf=ngf, nc=nc).to(device)
-    netD = net.Discriminator(ndf=ndf, nc=nc).to(device)
-    netG.apply(weights_init_dcgan)
-    netD.apply(weights_init_dcgan)
+    # Modelos — usando la fábrica 64×64 (crea o reanuda)
+    cfg = net.ModelConfig(nz=opts.nz, ngf=opts.ngf, ndf=opts.ndf, nc=3, lr=opts.lr, beta1=opts.beta1, device=device)
 
-    # Pérdida y optimizadores (Sigmoid + BCELoss como en Torch7)
-    criterion = torch.nn.BCELoss().to(device)
-    optimizerD = torch.optim.Adam(netD.parameters(), lr=opts.lr, betas=(opts.beta1, 0.999))
-    optimizerG = torch.optim.Adam(netG.parameters(), lr=opts.lr, betas=(opts.beta1, 0.999))
+    res = net.build_or_resume(
+        cfg,
+        resume_path=opts.resume,
+        weights_only_mode=opts.weights_only,
+        strict_g=bool(opts.resume_strict),
+    )
+
+    nz = opts.nz
+    netG, netD = res.G, res.D
+    criterion = res.criterion
+    optimizerG = res.optG
+    optimizerD = res.optD
+    start_epoch = res.start_epoch  # 1 o ckpt.epoch+1
 
     real_label = 1.0
     fake_label = 0.0
@@ -164,7 +169,7 @@ def train(opts):
 
     # Entrenamiento
     global_step = 0
-    for epoch in range(1, opts.niter + 1):
+    for epoch in range(start_epoch, opts.niter + 1):
         epoch_start = time.perf_counter()
         seen = 0  # ejemplos vistos para respetar ntrain
 
@@ -246,6 +251,10 @@ def train(opts):
 # ------------------------------------------------------------
 def parse_args():
     p = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    p.add_argument('--resume', type=str, default=None, help='Ruta a checkpoint .pt para reanudar (empieza en epoch = ckpt.epoch + 1)')
+    p.add_argument('--weights_only', type=str, default='auto', choices=['auto', 'true', 'false'], help='Modo de torch.load: seguridad/compatibilidad (ver FutureWarning de PyTorch)')
+    p.add_argument('--resume_strict', type=int, default=1, help='Cargar netG con strict=1/0 (útil si cambiaste claves)')
 
     p.add_argument('--dataset', type=str, default='folder', choices=['imagenet', 'lsun', 'folder', 'cifar10', 'fake'], help='Tipo de dataset')
     p.add_argument('--data_root', type=str, default='./data', help='Ruta raíz del dataset (para folder/imagenet/lsun). En cifar10/fake solo carpeta de cache.')
