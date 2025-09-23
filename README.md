@@ -8,7 +8,7 @@ In addition, the implementation extends the original functionality to support tr
 
 ## Overview
 
-PyTorch implementation of a classic DCGAN for generating 64×64 images. Includes Torch7-style weight initialization, checkpoint saving, and periodic sampling to `samples/`.
+PyTorch implementation of a classic DCGAN for generating 64×64 and 128x128 images. Includes Torch7-style weight initialization, checkpoint saving, and periodic sampling to `samples/`.
 
 ## Features
 
