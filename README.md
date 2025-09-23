@@ -1,21 +1,27 @@
-# DCGAN (PyTorch) — 64×64
+# DCGAN (PyTorch) — 64×64 / 128×128
 
-Implementación en **PyTorch** de un **DCGAN** clásico para generar imágenes a **64×64**. Incluye inicialización de pesos estilo Torch7, guardado de **checkpoints** y muestreo periódico a `samples/`.
+This repository is the result of adapting [Soumith Chintala's torch implementation](https://github.com/soumith/dcgan.torch), originally implemented in Lua for 64×64, into Python/PyTorch.
 
----
-
-## Características
-
-- Arquitecturas **Generator / Discriminator** estilo DCGAN.
-- Entrenamiento con Adam (`lr=2e-4`, `beta1=0.5` por defecto).
-- Normalización de imágenes a `[-1, 1]` y salida `tanh` en G.
-- Checkpoints por época (`checkpoints/*.pt`) y rejillas PNG (`samples/*.png`).
+In addition, the implementation has been extended to support training at 128×128.
 
 ---
 
-## Requisitos e instalación
+## Overview
 
-### 1) Crear y activar entorno
+PyTorch implementation of a classic DCGAN for generating 64×64 images. Includes Torch7-style weight initialization, checkpoint saving, and periodic sampling to `samples/`.
+
+---
+
+## Features
+
+- Generator / Discriminator DCGAN-style architectures.
+- Training with Adam (`lr=2e-4`, `beta1=0.5` by default).
+- Image normalization to `[-1, 1]` and `tanh` output in G.
+- Epoch checkpoints (`checkpoints/_.pt`) and PNG grids (`samples/_.png`).
+
+## Requirements and Installation
+
+### 1) Create and activate a virtual environment
 
 **Linux / macOS**
 
@@ -25,7 +31,7 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 ```
 
-### 2) Instalar dependencias
+### 2) Install dependencies
 
 ```bash
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
@@ -34,9 +40,9 @@ pip install pillow numpy tqdm lmdb
 
 ---
 
-## Preparación de datos
+## Data Preparation
 
-`ImageFolder` exige al menos una subcarpeta dentro de la raíz:
+`ImageFolder` requires at least one subdirectory inside the dataset root:
 
 ```bash
 data/MyImages/imagefolder/
@@ -46,11 +52,13 @@ data/MyImages/imagefolder/
     └── ...
 ```
 
-**Nota:** no dejes imágenes directamente en `imagefolder` sin subcarpeta.
+**Note:** Do not place images directly inside `imagefolder` without a subdirectory.
 
 ---
 
-## Ejecutar entrenamiento
+## Run Training
+
+For **64×64**:
 
 ```bash
 python3 train.py \
@@ -62,7 +70,7 @@ python3 train.py \
     --name dcgan_MyImages
 ```
 
-Para ejecutar entrenamiento para 128:
+For **128×128**:
 
 ```bash
 python3 train.py \
