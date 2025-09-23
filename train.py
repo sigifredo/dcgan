@@ -124,6 +124,11 @@ def save_sample_grid(tensor_bchw: torch.Tensor, out_dir: pathlib.Path, stem: str
 def train(opts):
     device = torch.device(f'cuda:{opts.gpu-1}' if (opts.gpu > 0 and torch.cuda.is_available()) else 'cpu')
 
+    # Directories
+    root_path = pathlib.Path('.') / 'outputs' / opts.name
+    ckpt_dir = root_path / 'checkpoints'
+    samples_dir = root_path / 'samples'
+
     print('Opciones:', vars(opts))
     print(f'Device: {device}')
 
@@ -178,12 +183,6 @@ def train(opts):
 
     # Ruido fijo para visualización (como noise_vis)
     fixed_noise = sample_noise(opts.batchSize, nz, device, opts.noise)
-
-    # Directorios
-    ckpt_dir = pathlib.Path('checkpoints') / opts.name
-    ckpt_dir.mkdir(parents=True, exist_ok=True)
-    samples_dir = pathlib.Path('samples') / opts.name
-    samples_dir.mkdir(parents=True, exist_ok=True)
 
     # Entrenamiento
     global_step = 0
