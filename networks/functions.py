@@ -1,5 +1,7 @@
 # from .generator import Generator
 
+import argparse
+import pathlib
 import torch
 import types
 
@@ -77,7 +79,18 @@ def load_checkpoint(checkpoint_path: str, nc: int, device: torch.device, mode: s
         raise Exception('Error leyendo el diccionario del checkpoint')
 
 
-def save_network(epoch_final, netG, netD, optimizerG, optimizerD, opts, path):
+def save_network(
+    epoch_final: int,
+    netG: torch.nn.Module,
+    netD: torch.nn.Module,
+    optimizerG: torch.optim.Optimizer,
+    optimizerD: torch.optim.Optimizer,
+    opts: argparse.Namespace,
+    path: str | pathlib.Path,
+) -> None:
+    path = pathlib.Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
     torch.save(
         {
             'epoch': epoch_final,

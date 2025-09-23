@@ -247,7 +247,7 @@ def train(opts):
 
         # Fin de epoch — guardar checkpoints (modulo)
         if (epoch % opts.epoch_save_modulo) == 0:
-            net.save_network(epoch, netG, netD, optimizerG, optimizerD, opts, ckpt_dir / f'{opts.name}_epoch_{epoch:03d}.pt')
+            net.save_network(epoch, netG, netD, optimizerG, optimizerD, opts, ckpt_dir / 'ckpts' / f'{opts.name}_epoch_{epoch:03d}.pt')
             # también una muestra fija por epoch
             with torch.no_grad():
                 fake_vis = netG(fixed_noise).detach().cpu()
