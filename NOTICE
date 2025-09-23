@@ -1,0 +1,7 @@
+This project includes and adapts code from:
+
+- Soumith Chintala's dcgan.torch (Lua), released under the BSD License. Source: https://github.com/soumith/dcgan.torch
+
+Unless otherwise noted, modifications and new files in this repository are distributed under the GNU General Public License (GPL). Original portions remain under their respective BSD License.
+
+Copyright (c) 2025 Sigifedo Escobar Gómez

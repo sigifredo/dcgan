@@ -1,16 +1,14 @@
 # DCGAN (PyTorch) — 64×64 / 128×128
 
-This repository is the result of adapting [Soumith Chintala's torch implementation](https://github.com/soumith/dcgan.torch), originally implemented in Lua for 64×64, into Python/PyTorch.
+This repository is the result of adapting [Soumith Chintala's torch implementation](https://github.com/soumith/dcgan.torch), originally implemented in Lua and released under the BSD License.
 
-In addition, the implementation has been extended to support training at 128×128.
+The code has been reimplemented in Python/PyTorch and is distributed under the GNU General Public License (GPL).
 
----
+In addition, the implementation extends the original functionality to support training at 128x128 resolution.
 
 ## Overview
 
 PyTorch implementation of a classic DCGAN for generating 64×64 images. Includes Torch7-style weight initialization, checkpoint saving, and periodic sampling to `samples/`.
-
----
 
 ## Features
 
@@ -38,8 +36,6 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
 pip install pillow numpy tqdm lmdb
 ```
 
----
-
 ## Data Preparation
 
 `ImageFolder` requires at least one subdirectory inside the dataset root:
@@ -53,8 +49,6 @@ data/MyImages/imagefolder/
 ```
 
 **Note:** Do not place images directly inside `imagefolder` without a subdirectory.
-
----
 
 ## Run Training
 
@@ -87,3 +81,14 @@ python3 train.py \
     --beta1 0.5 \
     --name dcgan_MyImages
 ```
+
+## License Notice
+
+This work includes code from [Soumith Chintala's implementation](https://github.com/soumith/dcgan.torch), originally implemented in Lua and released under the BSD License. That code has been adapted and extended in this repository.
+
+Unless otherwise noted, all modifications and new contributions are reimplemented in Python/PyTorch and distributed under the terms of the GNU General Public License (GPL).
+
+This means:
+
+- Original portions remain under their respective BSD License.
+- The combined and modified work is distributed under the GPL.
