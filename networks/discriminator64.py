@@ -1,7 +1,7 @@
 import torch
 
 
-class Discriminator(torch.nn.Module):
+class Discriminator64(torch.nn.Module):
     def __init__(self, ndf: int, nc: int = 3):
         super().__init__()
         self.main = torch.nn.Sequential(

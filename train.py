@@ -140,7 +140,16 @@ def train(opts):
     loader = torch.utils.data.DataLoader(dataset, batch_size=opts.batchSize, shuffle=True, num_workers=opts.nThreads, pin_memory=True if device.type == 'cuda' else False, drop_last=True)
 
     # Modelos — usando la fábrica 64×64 (crea o reanuda)
-    cfg = net.ModelConfig(nz=opts.nz, ngf=opts.ngf, ndf=opts.ndf, nc=3, lr=opts.lr, beta1=opts.beta1, device=device)
+    cfg = net.ModelConfig(
+        nz=opts.nz,
+        ngf=opts.ngf,
+        ndf=opts.ndf,
+        nc=3,
+        lr=opts.lr,
+        beta1=opts.beta1,
+        device=device,
+        image_size=opts.fineSize,
+    )
 
     res = net.build_or_resume(
         cfg,
@@ -171,10 +180,10 @@ def train(opts):
     fixed_noise = sample_noise(opts.batchSize, nz, device, opts.noise)
 
     # Directorios
-    ckpt_dir = pathlib.Path('checkpoints')
-    ckpt_dir.mkdir(exist_ok=True)
-    samples_dir = pathlib.Path('samples')
-    samples_dir.mkdir(exist_ok=True)
+    ckpt_dir = pathlib.Path('checkpoints') / opts.name
+    ckpt_dir.mkdir(parents=True, exist_ok=True)
+    samples_dir = pathlib.Path('samples') / opts.name
+    samples_dir.mkdir(parents=True, exist_ok=True)
 
     # Entrenamiento
     global_step = 0
@@ -230,7 +239,7 @@ def train(opts):
             if opts.display and (global_step % opts.display_freq == 0):
                 with torch.no_grad():
                     fake_vis = netG(fixed_noise).detach().cpu()
-                img_path = save_sample_grid(fake_vis, samples_dir, f'{opts.name}_e{epoch:03d}_it{global_step:08d}', nrow=8)
+                img_path = save_sample_grid(fake_vis, samples_dir / 'process', f'{opts.name}_e{epoch:03d}_it{global_step:08d}', nrow=8)
                 print(f'[Vis] Guardada muestra: {img_path}')
 
             if (i % opts.log_every) == 0:
@@ -238,11 +247,11 @@ def train(opts):
 
         # Fin de epoch — guardar checkpoints (modulo)
         if (epoch % opts.epoch_save_modulo) == 0:
-            net.save_network(epoch, netG, netD, optimizerG, optimizerD, opts, ckpt_dir / f'{opts.name}_epoch_{epoch:03d}.pt')
+            net.save_network(epoch, netG, netD, optimizerG, optimizerD, opts, ckpt_dir / 'ckpts' / f'{opts.name}_epoch_{epoch:03d}.pt')
             # también una muestra fija por epoch
             with torch.no_grad():
                 fake_vis = netG(fixed_noise).detach().cpu()
-            save_sample_grid(fake_vis, samples_dir, f'{opts.name}_epoch_{epoch:03d}', nrow=8)
+            save_sample_grid(fake_vis, samples_dir / 'epochs', f'{opts.name}_epoch_{epoch:03d}', nrow=8)
 
         print(f'Fin de epoch {epoch}/{opts.niter}  Tiempo: {time.perf_counter() - epoch_start:.2f}s')
 
@@ -270,8 +279,8 @@ def parse_args():
     p.add_argument('--lsun_classes', type=str, default='bedroom_train', help='Clases LSUN separadas por coma, p.ej: "bedroom_train,church_outdoor_train"')
 
     p.add_argument('--batchSize', type=int, default=64)
-    p.add_argument('--loadSize', type=int, default=96)
-    p.add_argument('--fineSize', type=int, default=64)
+    p.add_argument('--loadSize', type=int, default=160)
+    p.add_argument('--fineSize', type=int, default=128)
 
     p.add_argument('--nz', type=int, default=100, help='Dimensión del vector Z')
     p.add_argument('--ngf', type=int, default=64, help='# filtros iniciales del generador')

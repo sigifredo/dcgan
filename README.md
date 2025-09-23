@@ -53,11 +53,29 @@ data/MyImages/imagefolder/
 ## Ejecutar entrenamiento
 
 ```bash
-python3 main.py \
+python3 train.py \
     --dataset folder \
     --data_root data/MyImages/imagefolder \
     --niter 25 \
     --batchSize 64 \
     --gpu 1 \
+    --name dcgan_MyImages
+```
+
+Para ejecutar entrenamiento para 128:
+
+```bash
+python3 train.py \
+    --dataset folder \
+    --data_root ./data/MyImages/ \
+    --loadSize 160 \
+    --fineSize 128 \
+    --batchSize 64 \
+    --nz 100 \
+    --ngf 64 \
+    --ndf 64 \
+    --niter 75 \
+    --lr 0.0002 \
+    --beta1 0.5 \
     --name dcgan_MyImages
 ```
