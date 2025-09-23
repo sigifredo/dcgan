@@ -15,7 +15,13 @@ PyTorch implementation of a classic DCGAN for generating 64×64 and 128x128 imag
 - Generator / Discriminator DCGAN-style architectures.
 - Training with Adam (`lr=2e-4`, `beta1=0.5` by default).
 - Image normalization to `[-1, 1]` and `tanh` output in G.
-- Epoch checkpoints (`checkpoints/_.pt`) and PNG grids (`samples/_.png`).
+- Organized outputs under `output/<run_name>/`:
+  - **Checkpoints** → `output/<run_name>/checkpoints/`
+    - `final.pt` → final model checkpoint
+    - `ckpts/` → per-epoch checkpoints (`epoch_XX.pt`)
+  - **Samples** → `output/<run_name>/samples/`
+    - `process/` → images saved during training iterations
+    - `epochs/` → one image grid saved per epoch
 
 ## Requirements and Installation
 
